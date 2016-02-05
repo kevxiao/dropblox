@@ -305,6 +305,18 @@ int hcheck(const Board &board)
     return height;
 }
 
+int calcheight(const Board &board, int colNum)
+{
+	int height;
+  	for(int j = 32; j > -1; --j)
+  	{
+  		if (board.bitmap[j][colNum] == 1)
+  		{
+  			height = j;
+  		}
+  	}
+  	return height;
+}
 
 int main(int argc, char** argv) {
   // Construct a JSON Object with the given game state.
@@ -363,6 +375,7 @@ int main(int argc, char** argv) {
         else
             moves.push_back("right");
     }
+
   // Ignore the last move, because it moved the block into invalid
   // position. Make all the rest.
   for (int i = 0; i < moves.size(); i++) {
