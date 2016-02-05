@@ -335,6 +335,8 @@ int calcheight(const Board &board, int colNum)
   	return height;
 }
 
+
+
 int checkExposedSides(const Board &board)
 {
     int sides = ROWS;
@@ -344,19 +346,19 @@ int checkExposedSides(const Board &board)
         {
             if(board.bitmap[j][i] != 0)
             {
-                if(board.bitmap[j+1][i] != 0)
+                if(board.bitmap[j+1][i] == 0)
                 {
                     ++sides;
                 }
-                if(board.bitmap[j-1][i] != 0)
+                if(board.bitmap[j-1][i] == 0)
                 {
                     ++sides;
                 }
-                if(board.bitmap[j][i+1] != 0)
+                if(board.bitmap[j][i+1] == 0)
                 {
                     ++sides;
                 }
-                if(board.bitmap[j][i-1] != 0)
+                if(board.bitmap[j][i-1] == 0)
                 {
                     ++sides;
                 }
