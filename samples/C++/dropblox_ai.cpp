@@ -277,6 +277,19 @@ void Board::remove_rows(Bitmap* new_bitmap) {
   }
 }
 
+int calcheight(int colNum)
+{
+	int height;
+  	for(int j = 32; j > -1; --j)
+  	{
+  		if (board.bitmap[j][colNum] == 1)
+  		{
+  			height = j;
+  		}
+  	}
+  	return height;
+}
+
 int main(int argc, char** argv) {
   // Construct a JSON Object with the given game state.
   istringstream raw_state(argv[1]);
@@ -292,6 +305,9 @@ int main(int argc, char** argv) {
     board.block->left();
     moves.push_back("left");
   }
+
+
+
   // Ignore the last move, because it moved the block into invalid
   // position. Make all the rest.
   for (int i = 0; i < moves.size() - 1; i++) {
