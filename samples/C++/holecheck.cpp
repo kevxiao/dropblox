@@ -30,8 +30,11 @@ int holecheck(const Board &board)
             for (int c = 0; c < COLS; ++c)
                 if (grid[r-1][c] == 0)
                 {
-                    grid[r][c] = 0;
-                    --holecount;
+                    if (grid[r][c] == 1)
+                    {
+                        grid[r][c] = 0;
+                        --holecount;
+                    }   
                 }
         }
     }
