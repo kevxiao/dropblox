@@ -281,15 +281,32 @@ void Board::remove_rows(Bitmap* new_bitmap) {
   }
 }
 
+int linecheck(const Board &board)
+{
+    int rows_removed = 0;
+    for (int i = ROWS - 1; i >= 0; i--)
+    {
+        bool full = true;
+        for (int j = 0; j < COLS; j++)
+        {
+            if (!board.bitmap[i][j])
+            {
+                full = false;
+                break;
+            }
+        }
+        if (full)
+        {
+            rows_removed += 1;
+        }
+    }
+
+    return rows_removed;
+}
+
 int hcheck(const Board &board)
 {
     int height = 0;
-   /* for (int r = 0; r < ROWS; ++r)
-        {
-            for (int c = 0; c < COLS; ++c)
-                cerr << board.bitmap[r][c];
-            cerr << endl;
-        }*/
     for (int c = 0; c < COLS; ++c)
     {
         int top = ROWS - 1;
@@ -302,12 +319,12 @@ int hcheck(const Board &board)
         }
         height += (ROWS - top - 1);
     }
-    return height;
+    return height - COLS * linecheck(board);
 }
 
 int calcheight(const Board &board, int colNum)
 {
-	int height;
+	int height = 0;
   	for(int j = 32; j > -1; --j)
   	{
   		if (board.bitmap[j][colNum] == 1)
@@ -318,54 +335,97 @@ int calcheight(const Board &board, int colNum)
   	return height;
 }
 
-int main(int argc, char** argv) {
-  // Construct a JSON Object with the given game state.
-  istringstream raw_state(argv[1]);
-  Object state;
-  Reader::Read(state, raw_state);
-
-  // Make some moves!
-  int best_h = -1;
-  int best_m = -99;
-  int best_r = 0;
-  for (int rot = 0; rot < 4; ++rot)
-  {
-    for (int i = -5; i < 6; ++i)
+int checkExposedSides(const Board &board)
+{
+    int sides = ROWS;
+    for (int i = 0; i < COLS; ++i)
     {
-      Board board(state);
-      
-          for (int k = 0; k < rot; ++k)
-            board.block->rotate();
-            
-          for (int j = 0; j < abs(i); ++j)
-          {
-            if (i < 0)
+        for(int j = 0; j < ROWS; ++j)
+        {
+            if(board.bitmap[j][i] != 0)
             {
-                board.block->left();
+                if(board.bitmap[j+1][i] != 0)
+                {
+                    ++sides;
+                }
+                if(board.bitmap[j-1][i] != 0)
+                {
+                    ++sides;
+                }
+                if(board.bitmap[j][i+1] != 0)
+                {
+                    ++sides;
+                }
+                if(board.bitmap[j][i-1] != 0)
+                {
+                    ++sides;
+                }
             }
-            else
-            {
-                board.block->right();
-            }
-          }
-          if (board.check(*board.block))
-          {
-              
-              int result = hcheck(*(board.place()));
-          if (best_h == -1 || result < best_h)
-          {
-              best_h = result;
-              best_m = i;
-              best_r = rot;
-          }
-              
-          }
-          
+        }
     }
-  }
-  vector<string> moves;
-  for (int i = 0; i < best_r; ++i)
-  {
+    return sides;
+}
+
+int main(int argc, char** argv) {
+    // Construct a JSON Object with the given game state.
+    istringstream raw_state(argv[1]);
+    Object state;
+    Reader::Read(state, raw_state);
+
+    // Make some moves!
+    int best_h = -1;
+    int best_exp = -1;
+    int best_m = -99;
+    int best_r = 0;
+    for (int rot = 0; rot < 4; ++rot)
+    {
+        for (int i = -5; i < 6; ++i)
+        {
+            Board board(state);
+
+            for (int k = 0; k < rot; ++k)
+            board.block->rotate();
+
+            for (int j = 0; j < abs(i); ++j)
+            {
+                if (i < 0)
+                {
+                    board.block->left();
+                }
+                else
+                {
+                    board.block->right();
+                }
+            }
+            if (board.check(*board.block))
+            {
+                Board tempbrd = *(board.place());
+
+                int exposedSides = checkExposedSides(tempbrd);
+                if(best_exp == -1 || exposedSides < best_exp)
+                {
+                    best_exp = exposedSides;
+                    best_m = i;
+                    best_r = rot;
+                    best_h = hcheck(tempbrd);
+                }
+                else if(exposedSides == best_exp)
+                {
+                    int result = hcheck(tempbrd);
+                    if (best_h == -1 || result < best_h)
+                    {
+                        best_h = result;
+                        best_m = i;
+                        best_r = rot;
+                    }
+                }
+            }
+
+        }
+    }
+    vector<string> moves;
+    for (int i = 0; i < best_r; ++i)
+    {
       moves.push_back("rotate");
     }
     for (int i = 0; i < abs(best_m); ++i)
@@ -376,9 +436,9 @@ int main(int argc, char** argv) {
             moves.push_back("right");
     }
 
-  // Ignore the last move, because it moved the block into invalid
-  // position. Make all the rest.
-  for (int i = 0; i < moves.size(); i++) {
+    // Ignore the last move, because it moved the block into invalid
+    // position. Make all the rest.
+    for (int i = 0; i < moves.size(); i++) {
     cout << moves[i] << endl;
-  }
+    }
 }
