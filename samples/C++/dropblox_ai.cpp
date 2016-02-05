@@ -1,4 +1,8 @@
 #include "dropblox_ai.h"
+#include <cstdlib>
+#include <time.h>
+#include <vector>
+#include <cmath>
 
 using namespace json;
 using namespace std;
@@ -277,24 +281,91 @@ void Board::remove_rows(Bitmap* new_bitmap) {
   }
 }
 
+int hcheck(const Board &board)
+{
+    int height = 0;
+   /* for (int r = 0; r < ROWS; ++r)
+        {
+            for (int c = 0; c < COLS; ++c)
+                cerr << board.bitmap[r][c];
+            cerr << endl;
+        }*/
+    for (int c = 0; c < COLS; ++c)
+    {
+        int top = ROWS - 1;
+        for (int r = ROWS - 1; r >= 0; --r)
+        {
+            if (board.bitmap[r][c] != 0)
+            {
+                top = r;                
+            }            
+        }
+        height += (ROWS - top - 1);
+    }
+    return height;
+}
+
+
 int main(int argc, char** argv) {
   // Construct a JSON Object with the given game state.
   istringstream raw_state(argv[1]);
   Object state;
   Reader::Read(state, raw_state);
 
-  // Construct a board from this Object.
-  Board board(state);
-
   // Make some moves!
-  vector<string> moves;
-  while (board.check(*board.block)) {
-    board.block->left();
-    moves.push_back("left");
+  int best_h = -1;
+  int best_m = -99;
+  int best_r = 0;
+  for (int rot = 0; rot < 4; ++rot)
+  {
+    for (int i = -5; i < 6; ++i)
+    {
+      Board board(state);
+      
+          for (int k = 0; k < rot; ++k)
+            board.block->rotate();
+            
+          for (int j = 0; j < abs(i); ++j)
+          {
+            if (i < 0)
+            {
+                board.block->left();
+            }
+            else
+            {
+                board.block->right();
+            }
+          }
+          if (board.check(*board.block))
+          {
+              
+              int result = hcheck(*(board.place()));
+          if (best_h == -1 || result < best_h)
+          {
+              best_h = result;
+              best_m = i;
+              best_r = rot;
+          }
+              
+          }
+          
+    }
   }
+  vector<string> moves;
+  for (int i = 0; i < best_r; ++i)
+  {
+      moves.push_back("rotate");
+    }
+    for (int i = 0; i < abs(best_m); ++i)
+    {
+        if (best_m < 0)
+            moves.push_back("left");
+        else
+            moves.push_back("right");
+    }
   // Ignore the last move, because it moved the block into invalid
   // position. Make all the rest.
-  for (int i = 0; i < moves.size() - 1; i++) {
+  for (int i = 0; i < moves.size(); i++) {
     cout << moves[i] << endl;
   }
 }
